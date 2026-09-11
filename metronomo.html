@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metrónomo & Afinador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#1a1713;
+    --panel:#211d18;
+    --panel-2:#2a2520;
+    --border:#3c352c;
+    --text:#efe8db;
+    --text-dim:#a79c8a;
+    --brass:#c9974f;
+    --brass-dim:#8f6f3d;
+    --good:#7ea888;
+    --warn:#d9a441;
+    --bad:#c15a5a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:28px 14px 60px;
+    background-image:
+      radial-gradient(circle at 20% 0%, rgba(201,151,79,0.06), transparent 40%),
+      radial-gradient(circle at 90% 100%, rgba(126,168,136,0.05), transparent 45%);
+  }
+  .app{width:100%;max-width:460px;}
+
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:1.5rem;
+    letter-spacing:-0.01em;
+    margin:0 0 4px;
+    color:var(--text);
+  }
+  .subtitle{color:var(--text-dim);font-size:0.85rem;margin:0 0 20px;}
+
+  .tabs{
+    display:flex;
+    border:1px solid var(--border);
+    border-radius:10px;
+    overflow:hidden;
+    margin-bottom:18px;
+  }
+  .tab{
+    flex:1;
+    padding:10px 0;
+    text-align:center;
+    font-size:0.9rem;
+    font-weight:600;
+    cursor:pointer;
+    background:var(--panel);
+    color:var(--text-dim);
+    transition:background .15s, color .15s;
+    user-select:none;
+  }
+  .tab.active{background:var(--brass);color:#1a1713;}
+  .tab:not(.active):hover{color:var(--text);}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:22px 20px;
+  }
+  .panel + .panel{margin-top:16px;}
+  .section-title{
+    font-size:0.78rem;
+    color:var(--text-dim);
+    font-weight:600;
+    margin:0 0 10px;
+  }
+  .divider{height:1px;background:var(--border);margin:18px 0;}
+
+  /* Tempo display */
+  .tempo-display{
+    text-align:center;
+    margin-bottom:14px;
+  }
+  .tempo-number{
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:4.4rem;
+    line-height:1;
+    color:var(--brass);
+    letter-spacing:-0.02em;
+  }
+  .tempo-label{color:var(--text-dim);font-size:0.85rem;margin-top:2px;}
+
+  .tempo-controls{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .round-btn{
+    width:38px;height:38px;border-radius:50%;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    font-size:1.2rem;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .round-btn:active{background:var(--brass-dim);}
+
+  input[type=range]{
+    -webkit-appearance:none;
+    width:100%;
+    height:4px;
+    border-radius:2px;
+    background:var(--border);
+    outline:none;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    width:18px;height:18px;
+    border-radius:50%;
+    background:var(--brass);
+    cursor:pointer;
+    border:2px solid #1a1713;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:16px;height:16px;border-radius:50%;
+    background:var(--brass);border:2px solid #1a1713;cursor:pointer;
+  }
+
+  .tap-row{display:flex;justify-content:center;margin-bottom:4px;}
+  .btn{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:0.85rem;
+    padding:9px 16px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text);
+    cursor:pointer;
+  }
+  .btn:hover{border-color:var(--brass-dim);}
+  .btn.small{padding:6px 12px;font-size:0.78rem;}
+
+  /* time signature */
+  .row{display:flex;gap:8px;align-items:center;}
+  select{
+    background:var(--panel-2);
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px 10px;
+    font-family:'Inter',sans-serif;
+    font-size:0.95rem;
+  }
+  .sig-input{
+    display:flex;align-items:center;gap:6px;
+    font-family:'Fraunces',serif;font-size:1.3rem;color:var(--text);
+  }
+  .preset-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .preset-btn{
+    font-size:0.78rem;
+    padding:6px 10px;
+    border-radius:20px;
+    border:1px solid var(--border);
+    background:transparent;
+    color:var(--text-dim);
+    cursor:pointer;
+  }
+  .preset-btn.active{background:var(--brass);border-color:var(--brass);color:#1a1713;}
+
+  .sub-group{display:flex;gap:8px;margin-top:2px;}
+  .sub-btn{
+    flex:1;
+    text-align:center;
+    padding:9px 4px;
+    border-radius:8px;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text-dim);
+    cursor:pointer;
+    font-size:0.8rem;
+  }
+  .sub-btn.active{border-color:var(--brass);color:var(--brass);}
+
+  /* beat indicators */
+  .beats-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:16px 0 4px;}
+  .beat{
+    width:34px;height:34px;
+    border-radius:50%;
+    border:2px solid var(--border);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    font-size:0.7rem;
+    color:var(--text-dim);
+    background:var(--panel-2);
+    transition:transform .06s;
+    position:relative;
+  }
+  .beat.accent{border-color:var(--brass);color:var(--brass);background:rgba(201,151,79,0.12);}
+  .beat.normal{border-color:var(--text-dim);color:var(--text);}
+  .beat.rest{border-style:dashed;color:var(--text-dim);opacity:0.5;}
+  .beat.playing{transform:scale(1.22);box-shadow:0 0 0 3px rgba(201,151,79,0.25);}
+  .beat-hint{text-align:center;color:var(--text-dim);font-size:0.72rem;margin-bottom:14px;}
+
+  .transport{display:flex;gap:10px;margin-top:18px;}
+  .play-btn{
+    flex:1;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:13px 0;
+    border-radius:10px;
+    border:none;
+    background:var(--brass);
+    color:#1a1713;
+    font-weight:700;
+    font-size:0.95rem;
+    cursor:pointer;
+  }
+  .play-btn.stop{background:var(--panel-2);color:var(--text);border:1px solid var(--border);}
+  .mic-btn{
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    padding:13px 16px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text);
+    cursor:pointer;
+    font-size:0.85rem;
+    font-weight:600;
+  }
+  .mic-btn{transition:background .15s, border-color .15s, color .15s, box-shadow .15s;}
+  .mic-btn.active{
+    background:var(--bad);
+    border-color:var(--bad);
+    color:#fff;
+    box-shadow:0 0 0 3px rgba(193,90,90,0.28);
+  }
+  .mic-btn.active svg{animation:pulse-mic 1.2s ease-in-out infinite;}
+  @keyframes pulse-mic{
+    0%,100%{opacity:1;}
+    50%{opacity:0.45;}
+  }
+
+  /* timing detection */
+  .timing-panel{margin-top:16px;}
+  .accuracy-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;}
+  .accuracy-value{font-family:'Fraunces',serif;font-size:2.2rem;font-weight:700;}
+  .accuracy-value.good{color:var(--good);}
+  .accuracy-value.warn{color:var(--warn);}
+  .accuracy-value.bad{color:var(--bad);}
+  .history-bar{display:flex;gap:3px;height:26px;align-items:flex-end;}
+  .hit{flex:1;border-radius:2px;min-width:4px;height:100%;background:var(--border);}
+  .hit.good{background:var(--good);}
+  .hit.warn{background:var(--warn);}
+  .hit.bad{background:var(--bad);}
+  .timing-status{font-size:0.78rem;color:var(--text-dim);margin-top:8px;text-align:center;}
+
+  /* tuner */
+  .tuner-panel{text-align:center;}
+  .note-display{
+    font-family:'Fraunces',serif;
+    font-size:5.5rem;
+    font-weight:700;
+    line-height:1;
+    margin:10px 0 0;
+    transition:color .12s;
+  }
+  .note-octave{font-size:1.6rem;vertical-align:super;color:var(--text-dim);}
+  .freq-display{color:var(--text-dim);font-size:0.9rem;margin-bottom:20px;}
+  .cents-meter{
+    position:relative;
+    height:8px;
+    background:var(--panel-2);
+    border-radius:4px;
+    margin:0 10px 6px;
+    border:1px solid var(--border);
+  }
+  .cents-center{
+    position:absolute;left:50%;top:-4px;bottom:-4px;width:2px;background:var(--border);
+  }
+  .cents-needle{
+    position:absolute;top:-6px;
+    width:16px;height:16px;
+    border-radius:50%;
+    background:var(--good);
+    transform:translateX(-50%);
+    transition:left .08s, background .12s;
+    box-shadow:0 0 0 3px rgba(0,0,0,0.25);
+  }
+  .cents-labels{display:flex;justify-content:space-between;color:var(--text-dim);font-size:0.7rem;padding:0 4px;margin-bottom:24px;}
+  .tuner-hint{color:var(--text-dim);font-size:0.8rem;}
+  .tuner-idle .note-display{color:var(--text-dim);}
+
+  .footer-note{color:var(--text-dim);font-size:0.72rem;text-align:center;margin-top:18px;line-height:1.5;}
+  svg{display:block;}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Metrónomo &amp; Afinador</h1>
+  <p class="subtitle">Para qualquer instrumento — do contrabaixo à flauta.</p>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="metro">Metrónomo</div>
+    <div class="tab" data-tab="tuner">Afinador</div>
+  </div>
+
+  <!-- METRÓNOMO -->
+  <div id="view-metro">
+    <div class="panel">
+      <div class="tempo-display">
+        <div class="tempo-number" id="tempoNumber">96</div>
+        <div class="tempo-label">pulsações por minuto</div>
+      </div>
+      <div class="tempo-controls">
+        <div class="round-btn" id="bpmDown">−</div>
+        <input type="range" id="bpmSlider" min="20" max="300" value="96">
+        <div class="round-btn" id="bpmUp">+</div>
+      </div>
+      <div class="tap-row">
+        <button class="btn" id="tapBtn">Tap tempo</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-title">Compasso</div>
+      <div class="row">
+        <div class="sig-input">
+          <select id="numSelect"></select>
+          <span>/</span>
+          <select id="denSelect">
+            <option value="4">4</option>
+            <option value="8">8</option>
+            <option value="2">2</option>
+            <option value="16">16</option>
+          </select>
+        </div>
+      </div>
+      <div class="preset-group" id="presetGroup"></div>
+
+      <div class="divider"></div>
+
+      <div class="section-title">Subdivisão de cada tempo</div>
+      <div class="sub-group" id="subGroup"></div>
+    </div>
+
+    <div class="panel">
+      <div class="section-title">Tempos do compasso — toca para alternar acento / normal / pausa</div>
+      <div class="beats-row" id="beatsRow"></div>
+      <div class="beat-hint">acento · normal · pausa (silenciado, mantém a contagem)</div>
+
+      <div class="transport">
+        <button class="play-btn" id="playBtn">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2l11 6-11 6V2z"/></svg>
+          Iniciar
+        </button>
+        <button class="mic-btn" id="micTimingBtn">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 10a2.5 2.5 0 0 0 2.5-2.5v-4a2.5 2.5 0 0 0-5 0v4A2.5 2.5 0 0 0 8 10zm4.5-2.5a.5.5 0 0 1 1 0 5.5 5.5 0 0 1-5 5.478V14h2a.5.5 0 0 1 0 1H5.5a.5.5 0 0 1 0-1h2v-1.022A5.5 5.5 0 0 1 2.5 7.5a.5.5 0 0 1 1 0 4.5 4.5 0 0 0 9 0z"/></svg>
+          Analisar tempo
+        </button>
+      </div>
+    </div>
+
+    <div class="panel timing-panel" id="timingPanel" style="display:none;">
+      <div class="accuracy-row">
+        <div class="section-title" style="margin:0;">Precisão rítmica</div>
+        <div class="accuracy-value good" id="accuracyValue">—</div>
+      </div>
+      <div class="history-bar" id="historyBar"></div>
+      <div class="timing-status" id="timingStatus">Toca o teu instrumento perto do microfone, em cima da pulsação.</div>
+    </div>
+
+    <p class="footer-note">O andamento controla a pulsação principal do compasso. Em compassos compostos (6/8, 9/8, 12/8) cada tempo corresponde a uma colcheia.</p>
+  </div>
+
+  <!-- AFINADOR -->
+  <div id="view-tuner" style="display:none;">
+    <div class="panel tuner-panel tuner-idle" id="tunerPanel">
+      <div class="section-title">Afinador cromático</div>
+      <div class="note-display" id="noteDisplay">—</div>
+      <div class="freq-display" id="freqDisplay">liga o microfone para começar</div>
+      <div class="cents-meter">
+        <div class="cents-center"></div>
+        <div class="cents-needle" id="centsNeedle" style="left:50%;"></div>
+      </div>
+      <div class="cents-labels"><span>−50¢</span><span>afinado</span><span>+50¢</span></div>
+      <button class="mic-btn" id="micTunerBtn" style="width:100%;justify-content:center;">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 10a2.5 2.5 0 0 0 2.5-2.5v-4a2.5 2.5 0 0 0-5 0v4A2.5 2.5 0 0 0 8 10zm4.5-2.5a.5.5 0 0 1 1 0 5.5 5.5 0 0 1-5 5.478V14h2a.5.5 0 0 1 0 1H5.5a.5.5 0 0 1 0-1h2v-1.022A5.5 5.5 0 0 1 2.5 7.5a.5.5 0 0 1 1 0 4.5 4.5 0 0 0 9 0z"/></svg>
+        Ligar microfone
+      </button>
+      <p class="tuner-hint" style="margin-top:14px;">Funciona com qualquer instrumento — deteta a frequência fundamental, do Si grave de um baixo de 5 cordas às notas agudas de uma flauta.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------------- ESTADO ---------------- */
+const state = {
+  bpm: 96,
+  numerator: 4,
+  denominator: 4,
+  subdivision: 1,
+  beats: ['accent','normal','normal','normal'],
+  playing: false,
+  micTiming: false,
+  micTuner: false,
+};
+
+let audioCtx = null;
+function ensureAudio(){
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+/* ---------------- TABS ---------------- */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const tab = t.dataset.tab;
+    document.getElementById('view-metro').style.display = tab==='metro' ? '' : 'none';
+    document.getElementById('view-tuner').style.display = tab==='tuner' ? '' : 'none';
+    if (tab!=='metro'){ stopMicTiming(); }
+    if (tab!=='tuner'){ stopTuner(); }
+  });
+});
+
+/* ---------------- TEMPO ---------------- */
+const tempoNumberEl = document.getElementById('tempoNumber');
+const bpmSlider = document.getElementById('bpmSlider');
+
+function setBpm(v){
+  v = Math.max(20, Math.min(300, Math.round(v)));
+  state.bpm = v;
+  tempoNumberEl.textContent = v;
+  bpmSlider.value = v;
+}
+bpmSlider.addEventListener('input', e=> setBpm(+e.target.value));
+document.getElementById('bpmUp').addEventListener('click', ()=> setBpm(state.bpm+1));
+document.getElementById('bpmDown').addEventListener('click', ()=> setBpm(state.bpm-1));
+
+let tapTimes = [];
+document.getElementById('tapBtn').addEventListener('click', ()=>{
+  const now = performance.now();
+  tapTimes = tapTimes.filter(t => now - t < 2200);
+  tapTimes.push(now);
+  if (tapTimes.length >= 2){
+    const intervals = [];
+    for (let i=1;i<tapTimes.length;i++) intervals.push(tapTimes[i]-tapTimes[i-1]);
+    const avg = intervals.reduce((a,b)=>a+b,0)/intervals.length;
+    setBpm(60000/avg);
+  }
+});
+
+/* ---------------- COMPASSO ---------------- */
+const numSelect = document.getElementById('numSelect');
+for (let i=1;i<=12;i++){
+  const o = document.createElement('option');
+  o.value = i; o.textContent = i;
+  numSelect.appendChild(o);
+}
+numSelect.value = 4;
+const denSelect = document.getElementById('denSelect');
+
+const PRESETS = [
+  {label:'2/4', num:2, den:4},
+  {label:'3/4', num:3, den:4},
+  {label:'4/4', num:4, den:4},
+  {label:'6/8', num:6, den:8},
+  {label:'9/8', num:9, den:8},
+  {label:'12/8', num:12, den:8},
+];
+const presetGroup = document.getElementById('presetGroup');
+PRESETS.forEach(p=>{
+  const b = document.createElement('div');
+  b.className = 'preset-btn';
+  b.textContent = p.label;
+  b.addEventListener('click', ()=> applyPreset(p));
+  presetGroup.appendChild(b);
+});
+
+function accentPattern(num, den){
+  const beats = new Array(num).fill('normal');
+  beats[0] = 'accent';
+  if (den === 8 && num % 3 === 0){
+    for (let i=3;i<num;i+=3) beats[i] = 'accent';
+  }
+  return beats;
+}
+
+function applyPreset(p){
+  state.numerator = p.num;
+  state.denominator = p.den;
+  numSelect.value = p.num;
+  denSelect.value = p.den;
+  state.beats = accentPattern(p.num, p.den);
+  highlightPreset(p.label);
+  renderBeats();
+}
+
+function highlightPreset(label){
+  document.querySelectorAll('.preset-btn').forEach(b=>{
+    b.classList.toggle('active', b.textContent === label);
+  });
+}
+
+function syncFromSelects(){
+  state.numerator = +numSelect.value;
+  state.denominator = +denSelect.value;
+  const prevLen = state.beats.length;
+  if (state.numerator > prevLen){
+    while (state.beats.length < state.numerator) state.beats.push('normal');
+  } else {
+    state.beats = state.beats.slice(0, state.numerator);
+  }
+  if (state.beats.length === 0) state.beats.push('accent');
+  if (state.beats[0] !== 'rest') state.beats[0] = 'accent';
+  highlightPreset(null);
+  renderBeats();
+}
+numSelect.addEventListener('change', syncFromSelects);
+denSelect.addEventListener('change', syncFromSelects);
+
+/* subdivisões */
+const SUBDIVS = [
+  {v:1, label:'Nenhuma'},
+  {v:2, label:'Duas (colcheias)'},
+  {v:3, label:'Três (tercinas)'},
+  {v:4, label:'Quatro (semicolcheias)'},
+];
+const subGroup = document.getElementById('subGroup');
+SUBDIVS.forEach(s=>{
+  const b = document.createElement('div');
+  b.className = 'sub-btn' + (s.v===1 ? ' active' : '');
+  b.textContent = s.label;
+  b.addEventListener('click', ()=>{
+    state.subdivision = s.v;
+    document.querySelectorAll('.sub-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+  });
+  subGroup.appendChild(b);
+});
+
+/* ---------------- TEMPOS / PAUSAS ---------------- */
+const beatsRow = document.getElementById('beatsRow');
+function renderBeats(){
+  beatsRow.innerHTML = '';
+  state.beats.forEach((b, i)=>{
+    const el = document.createElement('div');
+    el.className = 'beat ' + b;
+    el.textContent = i+1;
+    el.addEventListener('click', ()=>{
+      const order = ['accent','normal','rest'];
+      const next = order[(order.indexOf(state.beats[i])+1) % order.length];
+      state.beats[i] = next;
+      el.className = 'beat ' + next;
+    });
+    beatsRow.appendChild(el);
+  });
+}
+renderBeats();
+
+function highlightBeat(index, isMain){
+  const el = beatsRow.children[index];
+  if (!el) return;
+  if (isMain){
+    el.classList.add('playing');
+    setTimeout(()=> el.classList.remove('playing'), 90);
+  }
+}
+
+/* ---------------- SCHEDULER ---------------- */
+let nextNoteTime = 0;
+let currentBeat = 0, currentSub = 0;
+let timerID = null;
+const lookahead = 25.0;
+const scheduleAheadTime = 0.1;
+let scheduledNotes = [];
+
+function secondsPerBeat(){ return 60.0 / state.bpm; }
+
+function playClick(time, type){
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  const freq = type==='accent' ? 1600 : type==='normal' ? 1050 : 720;
+  const peak = type==='accent' ? 0.9 : type==='normal' ? 0.55 : 0.22;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.0001, time);
+  gain.gain.exponentialRampToValueAtTime(peak, time+0.001);
+  gain.gain.exponentialRampToValueAtTime(0.0001, time+0.045);
+  osc.start(time);
+  osc.stop(time+0.06);
+}
+
+function scheduleNote(beatIndex, subIndex, time){
+  const beatState = state.beats[beatIndex];
+  const isMain = subIndex === 0;
+  const muted = beatState === 'rest';
+  if (!muted){
+    if (isMain) playClick(time, beatState==='accent' ? 'accent' : 'normal');
+    else if (state.subdivision > 1) playClick(time, 'sub');
+  }
+  scheduledNotes.push({time, beatIndex, subIndex, isMain, muted});
+  const cutoff = audioCtx.currentTime - 2;
+  scheduledNotes = scheduledNotes.filter(n => n.time > cutoff);
+  const delay = (time - audioCtx.currentTime) * 1000;
+  setTimeout(()=> highlightBeat(beatIndex, isMain), Math.max(0, delay));
+}
+
+function advanceNote(){
+  const secPerSub = secondsPerBeat() / state.subdivision;
+  nextNoteTime += secPerSub;
+  currentSub++;
+  if (currentSub >= state.subdivision){
+    currentSub = 0;
+    currentBeat = (currentBeat + 1) % state.numerator;
+  }
+}
+
+function scheduler(){
+  while (nextNoteTime < audioCtx.currentTime + scheduleAheadTime){
+    scheduleNote(currentBeat, currentSub, nextNoteTime);
+    advanceNote();
+  }
+  timerID = setTimeout(scheduler, lookahead);
+}
+
+const playBtn = document.getElementById('playBtn');
+function startPlaying(){
+  ensureAudio();
+  state.playing = true;
+  currentBeat = 0; currentSub = 0;
+  nextNoteTime = audioCtx.currentTime + 0.05;
+  scheduler();
+  playBtn.classList.add('stop');
+  playBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="3" width="10" height="10" rx="1"/></svg> Parar';
+}
+function stopPlaying(){
+  state.playing = false;
+  clearTimeout(timerID);
+  playBtn.classList.remove('stop');
+  playBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2l11 6-11 6V2z"/></svg> Iniciar';
+}
+playBtn.addEventListener('click', ()=> state.playing ? stopPlaying() : startPlaying());
+
+/* ---------------- DETEÇÃO DE TEMPO (MICROFONE) ---------------- */
+let micStream, micAnalyser, micSource, micData;
+let micRAFTimer = null;
+let lastOnsetTime = -10;
+const REFRACTORY = 0.15;
+let onsetHistory = [];
+
+const timingPanel = document.getElementById('timingPanel');
+const micTimingBtn = document.getElementById('micTimingBtn');
+const accuracyValue = document.getElementById('accuracyValue');
+const historyBar = document.getElementById('historyBar');
+const timingStatus = document.getElementById('timingStatus');
+
+let autoStartedPlayback = false;
+
+async function startMicTiming(){
+  ensureAudio();
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    timingPanel.style.display = '';
+    timingStatus.textContent = 'O microfone não está disponível a abrir este ficheiro localmente. Abre-o a partir do chat da Claude ou num site https:// para poderes usar o microfone.';
+    return;
+  }
+  if (!state.playing){
+    startPlaying();
+    autoStartedPlayback = true;
+  }
+  try{
+    micStream = await navigator.mediaDevices.getUserMedia({audio:true});
+  }catch(e){
+    timingPanel.style.display = '';
+    timingStatus.textContent = 'Não foi possível aceder ao microfone. Verifica as permissões nas definições do navegador.';
+    return;
+  }
+  micSource = audioCtx.createMediaStreamSource(micStream);
+  micAnalyser = audioCtx.createAnalyser();
+  micAnalyser.fftSize = 1024;
+  micSource.connect(micAnalyser);
+  micData = new Float32Array(micAnalyser.fftSize);
+  state.micTiming = true;
+  onsetHistory = [];
+  calibrationOffset = 0;
+  noiseFloor = 0.01;
+  historyBar.innerHTML = '';
+  micTimingBtn.classList.add('active');
+  timingPanel.style.display = '';
+  detectOnsetLoop();
+}
+
+function stopMicTiming(){
+  state.micTiming = false;
+  micTimingBtn.classList.remove('active');
+  if (micStream) micStream.getTracks().forEach(t=>t.stop());
+  if (autoStartedPlayback && state.playing){
+    stopPlaying();
+  }
+  autoStartedPlayback = false;
+}
+micTimingBtn.addEventListener('click', ()=> state.micTiming ? stopMicTiming() : startMicTiming());
+
+let noiseFloor = 0.01;
+
+function detectOnsetLoop(){
+  if (!state.micTiming) return;
+  micAnalyser.getFloatTimeDomainData(micData);
+  let sumSq = 0;
+  for (let i=0;i<micData.length;i++) sumSq += micData[i]*micData[i];
+  const rms = Math.sqrt(sumSq / micData.length);
+  const now = audioCtx.currentTime;
+  const threshold = Math.max(0.018, noiseFloor * 3.2);
+  if (rms < threshold){
+    noiseFloor = noiseFloor * 0.98 + rms * 0.02;
+  }
+  if (rms > threshold && (now - lastOnsetTime) > REFRACTORY){
+    lastOnsetTime = now;
+    registerOnset(now);
+  }
+  requestAnimationFrame(detectOnsetLoop);
+}
+
+let calibrationOffset = 0;
+const CALIBRATION_ALPHA = 0.15;
+
+function registerOnset(onsetTime){
+  if (scheduledNotes.length === 0) return;
+  let nearest = null, minDiff = Infinity;
+  for (const n of scheduledNotes){
+    const diff = Math.abs(n.time - onsetTime);
+    if (diff < minDiff){ minDiff = diff; nearest = n; }
+  }
+  if (!nearest || minDiff > secondsPerBeat()) return;
+  const rawDeviationMs = (onsetTime - nearest.time) * 1000;
+
+  // compensa o atraso sistemático de ataque do instrumento (ex: baixo tem ataque mais lento que um clique)
+  const adjustedMs = rawDeviationMs - calibrationOffset;
+  calibrationOffset += CALIBRATION_ALPHA * (rawDeviationMs - calibrationOffset);
+  calibrationOffset = Math.max(-90, Math.min(90, calibrationOffset));
+
+  const subMs = (secondsPerBeat() / state.subdivision) * 1000;
+  const windowMs = Math.max(40, Math.min(150, subMs * 0.45));
+  const pct = Math.max(0, Math.round(100 - (Math.abs(adjustedMs) / windowMs) * 100));
+  let quality = 'good';
+  if (Math.abs(adjustedMs) > windowMs * 0.75) quality = 'bad';
+  else if (Math.abs(adjustedMs) > windowMs * 0.35) quality = 'warn';
+
+  onsetHistory.push({pct, quality});
+  if (onsetHistory.length > 24) onsetHistory.shift();
+  updateTimingUI(adjustedMs, quality);
+}
+
+function updateTimingUI(deviationMs, quality){
+  const avgPct = Math.round(onsetHistory.reduce((a,b)=>a+b.pct,0) / onsetHistory.length);
+  accuracyValue.textContent = avgPct + '%';
+  accuracyValue.className = 'accuracy-value ' + (avgPct>=80?'good':avgPct>=55?'warn':'bad');
+
+  historyBar.innerHTML = '';
+  onsetHistory.forEach(h=>{
+    const d = document.createElement('div');
+    d.className = 'hit ' + h.quality;
+    historyBar.appendChild(d);
+  });
+
+  const dir = deviationMs > 15 ? 'atrasado' : deviationMs < -15 ? 'adiantado' : 'no tempo';
+  timingStatus.textContent = quality==='good'
+    ? 'No tempo.'
+    : `Ligeiramente ${dir} (${Math.round(Math.abs(deviationMs))} ms, já a compensar o ataque do teu som).`;
+}
+
+/* ---------------- AFINADOR ---------------- */
+let tunerStream, tunerSource, tunerAnalyser, tunerBuf;
+let tunerTimer = null;
+const noteDisplay = document.getElementById('noteDisplay');
+const freqDisplay = document.getElementById('freqDisplay');
+const centsNeedle = document.getElementById('centsNeedle');
+const micTunerBtn = document.getElementById('micTunerBtn');
+const tunerPanel = document.getElementById('tunerPanel');
+
+const NOTE_NAMES = ['Dó','Dó♯','Ré','Ré♯','Mi','Fá','Fá♯','Sol','Sol♯','Lá','Lá♯','Si'];
+
+async function startTuner(){
+  ensureAudio();
+  try{
+    tunerStream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  }catch(e){
+    freqDisplay.textContent = 'Não foi possível aceder ao microfone.';
+    return;
+  }
+  tunerSource = audioCtx.createMediaStreamSource(tunerStream);
+  tunerAnalyser = audioCtx.createAnalyser();
+  tunerAnalyser.fftSize = 4096;
+  tunerSource.connect(tunerAnalyser);
+  tunerBuf = new Float32Array(tunerAnalyser.fftSize);
+  state.micTuner = true;
+  tunerPanel.classList.remove('tuner-idle');
+  micTunerBtn.classList.add('active');
+  micTunerBtn.textContent = '';
+  micTunerBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="3" width="10" height="10" rx="1"/></svg> Desligar microfone';
+  freqDisplay.textContent = 'a escutar…';
+  tunerLoop();
+}
+
+function stopTuner(){
+  state.micTuner = false;
+  if (tunerTimer) clearTimeout(tunerTimer);
+  if (tunerStream) tunerStream.getTracks().forEach(t=>t.stop());
+  micTunerBtn.classList.remove('active');
+  micTunerBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 10a2.5 2.5 0 0 0 2.5-2.5v-4a2.5 2.5 0 0 0-5 0v4A2.5 2.5 0 0 0 8 10zm4.5-2.5a.5.5 0 0 1 1 0 5.5 5.5 0 0 1-5 5.478V14h2a.5.5 0 0 1 0 1H5.5a.5.5 0 0 1 0-1h2v-1.022A5.5 5.5 0 0 1 2.5 7.5a.5.5 0 0 1 1 0 4.5 4.5 0 0 0 9 0z"/></svg> Ligar microfone';
+  tunerPanel.classList.add('tuner-idle');
+  noteDisplay.textContent = '—';
+  freqDisplay.textContent = 'liga o microfone para começar';
+  centsNeedle.style.left = '50%';
+  centsNeedle.style.background = 'var(--good)';
+}
+micTunerBtn.addEventListener('click', ()=> state.micTuner ? stopTuner() : startTuner());
+
+function autoCorrelate(buf, sampleRate){
+  const SIZE = buf.length;
+  let rms = 0;
+  for (let i=0;i<SIZE;i++) rms += buf[i]*buf[i];
+  rms = Math.sqrt(rms / SIZE);
+  if (rms < 0.012) return -1;
+
+  let r1 = 0, r2 = SIZE - 1;
+  const thres = 0.2;
+  for (let i=0;i<SIZE/2;i++){ if (Math.abs(buf[i]) < thres){ r1 = i; break; } }
+  for (let i=1;i<SIZE/2;i++){ if (Math.abs(buf[SIZE-i]) < thres){ r2 = SIZE-i; break; } }
+  const trimmed = buf.slice(r1, r2);
+  const newSize = trimmed.length;
+  const maxLag = Math.min(newSize - 1, Math.floor(sampleRate / 20));
+
+  const c = new Array(maxLag+1).fill(0);
+  for (let lag=0; lag<=maxLag; lag++){
+    let sum = 0;
+    for (let i=0; i<newSize-lag; i++) sum += trimmed[i]*trimmed[i+lag];
+    c[lag] = sum;
+  }
+
+  let d = 0;
+  while (d < maxLag && c[d] > c[d+1]) d++;
+  let maxval = -1, maxpos = -1;
+  for (let i=d;i<=maxLag;i++){
+    if (c[i] > maxval){ maxval = c[i]; maxpos = i; }
+  }
+  if (maxpos <= 0 || maxpos >= maxLag) return -1;
+  let T0 = maxpos;
+  const x1 = c[T0-1], x2 = c[T0], x3 = c[T0+1];
+  const a = (x1 + x3 - 2*x2) / 2;
+  const b = (x3 - x1) / 2;
+  if (a) T0 = T0 - b / (2*a);
+  return sampleRate / T0;
+}
+
+function freqToNote(freq){
+  const noteNum = 12 * (Math.log(freq/440) / Math.log(2)) + 69;
+  const rounded = Math.round(noteNum);
+  const cents = Math.round((noteNum - rounded) * 100);
+  const name = NOTE_NAMES[((rounded % 12) + 12) % 12];
+  const octave = Math.floor(rounded/12) - 1;
+  return {name, octave, cents};
+}
+
+function tunerLoop(){
+  if (!state.micTuner) return;
+  tunerAnalyser.getFloatTimeDomainData(tunerBuf);
+  const freq = autoCorrelate(tunerBuf, audioCtx.sampleRate);
+  if (freq !== -1 && freq > 20 && freq < 2000){
+    const note = freqToNote(freq);
+    noteDisplay.innerHTML = note.name + '<span class="note-octave">' + note.octave + '</span>';
+    freqDisplay.textContent = freq.toFixed(1) + ' Hz · ' + (note.cents>=0?'+':'') + note.cents + ' cêntimos';
+    const pos = 50 + Math.max(-50, Math.min(50, note.cents));
+    centsNeedle.style.left = pos + '%';
+    const absCents = Math.abs(note.cents);
+    const color = absCents <= 5 ? 'var(--good)' : absCents <= 15 ? 'var(--warn)' : 'var(--bad)';
+    centsNeedle.style.background = color;
+    noteDisplay.style.color = color;
+  }
+  tunerTimer = setTimeout(tunerLoop, 90);
+}
+</script>
+</body>
+</html>
